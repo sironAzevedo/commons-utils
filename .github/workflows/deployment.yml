@@ -21,6 +21,11 @@ jobs:
             NEW_VERSION=$(echo $VERSION | sed -E 's/([0-9]+)\.([0-9]+)-SNAPSHOT/\1.\2+1/')
             mvn versions:set -DnewVersion=$NEW_VERSION
             sed -i 's/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
+            git config --global user.name 'github-actions[bot]'
+            git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add pom.xml
+            git commit -m "Increment version to $NEW_VERSION"
+            git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/sironAzevedo/commons-utils.git HEAD:main
 
     compile:
         runs-on: ubuntu-latest
