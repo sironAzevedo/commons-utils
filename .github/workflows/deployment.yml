@@ -18,22 +18,14 @@ jobs:
           id: increment_version
           run: |
             VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-            IFS='.' read -ra ADDR <<< "$VERSION"
-            MAJOR=${ADDR[0]}
-            MINOR=${ADDR[1]}
-            PATCH=${ADDR[2]/-SNAPSHOT/}
-            NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            NEW_VERSION=$(echo $VERSION | sed -E 's/([0-9]+)\.([0-9]+)-SNAPSHOT/\1.\2+1/')
             mvn versions:set -DnewVersion=$NEW_VERSION
             sed -i 's/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
-        - name: Commit and push changes
-          env:
-            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          run: |
             git config --global user.name 'github-actions[bot]'
-            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+            git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add pom.xml
             git commit -m "Increment version to $NEW_VERSION"
-            git push https://x-access-token:${GITHUB_TOKEN}@github.com/sironAzevedo/commons-utils.git HEAD:main
+            git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/sironAzevedo/commons-utils.git HEAD:main
 
     compile:
         runs-on: ubuntu-latest
