@@ -29,12 +29,12 @@
         </plugins>
     </build>
 
-<!--    <distributionManagement>-->
-<!--        <repository>-->
-<!--            <id>github</id>-->
-<!--            <name>Github Apache Maven Packages</name>-->
-<!--            <url>https://maven.pkg.github.com/sironAzevedo/commons-utils</url>-->
-<!--        </repository>-->
-<!--    </distributionManagement>-->
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>Github Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/sironAzevedo/commons-utils</url>
+        </repository>
+    </distributionManagement>
 
 </project>
