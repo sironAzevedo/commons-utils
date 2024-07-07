@@ -19,11 +19,13 @@ jobs:
           run: |
             # Obter a versão atual da linha 9 do pom.xml
             VERSION=$(sed -n '9p' pom.xml | grep -oP '(?<=<version>).*(?=</version>)')
+            # Remover a palavra "SNAPSHOT" da versão
+            VERSION_CLEAN=${VERSION/-SNAPSHOT/}
             # Separar a versão em partes
-            IFS='.' read -ra ADDR <<< "$VERSION"
+            IFS='.' read -ra ADDR <<< "$VERSION_CLEAN"
             MAJOR=${ADDR[0]}
             MINOR=${ADDR[1]}
-            PATCH=${ADDR[2]/-SNAPSHOT/}
+            PATCH=${ADDR[2]}
             # Incrementar o PATCH e definir a nova versão
             NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
             # Atualizar a versão na linha 9 do pom.xml
