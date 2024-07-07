@@ -14,6 +14,17 @@ jobs:
           with:
             distribution: 'temurin'
             java-version: 17
+        - name: Get GitHub Packages versions count
+          id: versions_count
+          run: |
+            REPO="sironAzevedo/commons-utils"
+            PACKAGE_NAME="commons-utils"
+            AUTH="Authorization: token ${{ secrets.GITHUB_TOKEN }}"
+            API_URL="https://api.github.com"
+            VERSIONS_COUNT=$(curl -H "$AUTH" "$API_URL/orgs/{owner}/packages/maven/$PACKAGE_NAME/versions" | jq '. | length')
+            echo "::set-output name=count::$VERSIONS_COUNT"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         - name: Increment version
           id: increment_version
           run: |
@@ -25,8 +36,8 @@ jobs:
             IFS='.' read -ra ADDR <<< "$VERSION_CLEAN"
             MAJOR=${ADDR[0]}
             MINOR=${ADDR[1]}
-            PATCH=${ADDR[2]}
-            # Incrementar o PATCH e definir a nova versão
+            # Usar a contagem de versões para definir a nova versão
+            PATCH=${{ steps.versions_count.outputs.count }}
             NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
             # Atualizar a versão na linha 9 do pom.xml
             sed -i '9s/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
