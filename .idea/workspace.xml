@@ -5,9 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d54df86f-f9e4-4ff7-bba0-a676dec0446a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/settings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/workflows/deployment.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/deployment.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date/DateFormat.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date/DateRange.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date/ISOLocalDateDeserializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date/ISOLocalDateSerializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date/ISOLocalDateTimeDeserializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date/ISOLocalDateTimeSerializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date/LocalDateSerializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date/LocalDateTimeSerializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/deserializer/BigDecimalCurrencyDeserializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/serializer/BigDecimalCurrencySerializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/utils/ConstantesUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/br/azevedo/utils/DateUtils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,13 +60,19 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/siron/Documentos/develop/apps-java/libs/azevedo-commons-utils",
+    "last_opened_file_path": "/home/siron/Documentos/develop/apps-java/libs/azevedo-commons-utils/src/main/java/com/br/azevedo/conversor/date",
     "settings.editor.selected.configurable": "MavenSettings"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/java/com/br/azevedo/conversor/date" />
       <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.br.azevedo.utils" />
+      <recent name="com.br.azevedo.conversor.deserializer" />
+      <recent name="com.br.azevedo.conversor.serializer" />
     </key>
   </component>
   <component name="RunManager" selected="Maven.Deploy GitHub">
