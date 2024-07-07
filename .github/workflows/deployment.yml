@@ -25,6 +25,13 @@ jobs:
             NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
             mvn versions:set -DnewVersion=$NEW_VERSION
             sed -i 's/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
+        - name: Commit and push changes
+          run: |
+            git config --global user.name 'github-actions[bot]'
+            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+            git add pom.xml
+            git commit -m "Increment version to $NEW_VERSION"
+            git push
 
     compile:
         runs-on: ubuntu-latest
