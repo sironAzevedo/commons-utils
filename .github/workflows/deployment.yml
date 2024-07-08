@@ -38,7 +38,7 @@ jobs:
             MINOR=${ADDR[1]}
             # Usar a contagem de versões para definir a nova versão
             PATCH=${{ steps.versions_count.outputs.count }}
-            NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 2))"
             # Atualizar a versão na linha 9 do pom.xml
             sed -i '9s/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
         - name: Save updated pom.xml for next steps
