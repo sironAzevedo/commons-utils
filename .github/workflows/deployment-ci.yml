@@ -11,7 +11,7 @@ jobs:
       uses: sironAzevedo/ci-workflows/.github/workflows/java_build.yml@v0.0.12
       with:
         java-version: '17'
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
 
 #    test:
 #        runs-on: ubuntu-latest
