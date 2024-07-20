@@ -8,7 +8,7 @@ on:
 
 jobs:
     build:
-      uses: sironAzevedo/ci-workflows/.github/workflows/build.yml@main
+      uses: sironAzevedo/ci-workflows/.github/workflows/java_build.yml@v0.0.11
       with:
         java-version: '17'
         github-access-token: ${{ secrets.GH_TOKEN }}
