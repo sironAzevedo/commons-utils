@@ -7,30 +7,20 @@ on:
       - '!main'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: ${{ inputs.java-version }}
-      - name: Configure Maven settings
-        run: |
-          mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>\${env.GITHUB_ACTOR}</username><password>\${env.GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
-        env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      - name: Cache Maven dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-      - name: Build with Maven
-        run: mvn clean install -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+    build:
+      uses: sironAzevedo/ci-workflows/.github/workflows/java_build.yml@v0.0.17
+      with:
+        java-version: '17'
+        GITHUB_TOKEN: secrets.GH_TOKEN
+
+    test:
+      needs: [build]
+      uses: sironAzevedo/ci-workflows/.github/workflows/java_build.yml@v0.0.17
+      with:
+        java-version: '17'
+        GITHUB_TOKEN: secrets.GH_TOKEN
+
+
+#    create_pr:
+#      needs: [build, test]
+#      uses: sironAzevedo/ci-workflows/.github/workflows/git_pull_request.yml@v0.0.9
