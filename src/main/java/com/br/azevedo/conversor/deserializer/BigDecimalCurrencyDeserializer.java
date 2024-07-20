@@ -1,5 +1,6 @@
 package com.br.azevedo.conversor.deserializer;
 
+import com.br.azevedo.utils.MoedaUtils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -17,12 +18,6 @@ public class BigDecimalCurrencyDeserializer extends JsonDeserializer<BigDecimal>
     @Override
     public BigDecimal deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         String value = jsonParser.getText();
-        NumberFormat format = NumberFormat.getNumberInstance(new Locale("pt", "BR"));
-        try {
-            Number number = format.parse(value);
-            return BigDecimal.valueOf(number.doubleValue());
-        } catch (ParseException e) {
-            throw new IOException("Error deserializing BigDecimal", e);
-        }
+        return MoedaUtils.stringToBigDecimal(value);
     }
 }
