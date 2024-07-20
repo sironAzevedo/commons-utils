@@ -2,33 +2,15 @@ name: commons-utils
 
 on:
   push:
-    branches-ignore:
-      - main
+    branches:
+      - '*'
+      - '!main'
 
 jobs:
     build:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
-          - name: Download updated pom.xml
-            uses: actions/download-artifact@v3
-            with:
-              name: updated-pom
-              path: ./
-          - name: Set up JDK 17
-            uses: actions/setup-java@v4
-            with:
-              distribution: 'temurin'
-              java-version: 17
-          - name: Cache Maven dependencies
-            uses: actions/cache@v3
-            with:
-              path: ~/.m2/repository
-              key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-              restore-keys: |
-                ${{ runner.os }}-maven-
-          - name: Build & Compile project
-            run: mvn clean compile install -DskipTests
+      uses: sironAzevedo/ci-workflows/.github/workflows/build.yml@v0.0.9
+      with:
+        java-version: '17'
 
     test:
         runs-on: ubuntu-latest
