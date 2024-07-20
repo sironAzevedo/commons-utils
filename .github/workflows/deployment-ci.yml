@@ -8,9 +8,12 @@ on:
 
 jobs:
     build:
-      uses: sironAzevedo/ci-workflows/.github/workflows/build.yml@v0.0.9
-      with:
-        java-version: '17'
+      runs-on: ubuntu-latest
+      steps:
+        - name: Call build Workflow
+          uses: sironAzevedo/ci-workflows/.github/workflows/build.yml@v0.0.9
+          with:
+            java-version: '17'
 
     test:
         runs-on: ubuntu-latest
