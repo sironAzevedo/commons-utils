@@ -8,7 +8,7 @@ on:
 
 jobs:
     build:
-      uses: https://github.com/sironAzevedo/ci-workflows/.github/workflows/build.yml@v0.0.9
+      uses: sironAzevedo/ci-workflows/.github/workflows/build.yml@v0.0.9
       with:
         java-version: '17'
 
