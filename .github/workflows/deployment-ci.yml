@@ -8,19 +8,7 @@ on:
 
 jobs:
     build:
-      uses: sironAzevedo/ci-workflows/.github/workflows/java_build.yml@v0.0.17
+      uses: sironAzevedo/ci-workflows/.github/workflows/feature.yml@v0.0.18
       with:
         java-version: '17'
         GITHUB_TOKEN: secrets.GH_TOKEN
-
-    test:
-      needs: [build]
-      uses: sironAzevedo/ci-workflows/.github/workflows/java_build.yml@v0.0.17
-      with:
-        java-version: '17'
-        GITHUB_TOKEN: secrets.GH_TOKEN
-
-
-#    create_pr:
-#      needs: [build, test]
-#      uses: sironAzevedo/ci-workflows/.github/workflows/git_pull_request.yml@v0.0.9
