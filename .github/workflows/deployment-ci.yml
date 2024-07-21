@@ -15,7 +15,7 @@ jobs:
 
     create_pr:
       runs-on: ubuntu-latest
-
+      needs: [app]
       steps:
         - name: Checkout repository
           uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
         - name: Create Pull Request
           uses: peter-evans/create-pull-request@v5
           with:
-            token: ${{ inputs.GITHUB_TOKEN }}
+            token: ${{ secrets.GH_TOKEN }}
             commit-message: 'Automatic PR: Merge changes to main'
             branch: ${{ github.ref }}
             base: main
