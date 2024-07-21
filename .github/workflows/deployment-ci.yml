@@ -8,7 +8,7 @@ on:
 
 jobs:
     app:
-      uses: sironAzevedo/ci-workflows/.github/workflows/feature.yml@v0.0.33
+      uses: sironAzevedo/ci-workflows/.github/workflows/feature.yml@v0.0.34
       with:
         java-version: '17'
         GITHUB_TOKEN: secrets.GH_TOKEN
