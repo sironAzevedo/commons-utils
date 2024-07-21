@@ -19,12 +19,15 @@ jobs:
           run: |
             REPO="sironAzevedo/commons-utils"
             PACKAGE_NAME="commons-utils"
-            AUTH="Authorization: token ${{ secrets.GITHUB_TOKEN }}"
+            AUTH="Authorization: token ${{ secrets.GH_TOKEN }}"
             API_URL="https://api.github.com"
-            VERSIONS_COUNT=$(curl -H "$AUTH" "$API_URL/orgs/{owner}/packages/maven/$PACKAGE_NAME/versions" | jq '. | length')
+            VERSIONS=$(curl -H "$AUTH" "$API_URL/orgs/{owner}/packages/maven/$PACKAGE_NAME/versions")
+            VERSIONS_COUNT=$(echo "$VERSIONS" | jq '. | length')
+            echo "Found $VERSIONS_COUNT versions:"
+            echo "$VERSIONS" | jq -r '.[].name'
             echo "::set-output name=count::$VERSIONS_COUNT"
           env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         - name: Increment version
           id: increment_version
           run: |
@@ -97,7 +100,7 @@ jobs:
           - name: Run unit tests
             run: mvn test
 
-    publish:
+    create_package_github:
       runs-on: ubuntu-latest
       needs: [build, test]
       permissions:
