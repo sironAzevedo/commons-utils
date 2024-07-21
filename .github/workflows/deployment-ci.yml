@@ -27,6 +27,6 @@ jobs:
             commit-message: 'Automatic PR: Merge changes to main'
             branch: ${{ github.ref }}
             base: main
-            title: 'Automatic PR from ${{ github.ref }}'
+            title: 'Automatic PR from ${{ github.ref_name }}'
             body: |
-              Este PR foi criado automaticamente pelo fluxo de trabalho de CI para mesclar alterações de ${{ github.ref }} para main.
+              Este PR foi criado automaticamente pelo fluxo de trabalho de CI para mesclar alterações de ${{ github.ref_name }} para main.
