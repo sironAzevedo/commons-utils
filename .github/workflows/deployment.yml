@@ -35,8 +35,8 @@ jobs:
             VERSION=$(sed -n '9p' pom.xml | grep -oP '(?<=<version>).*(?=</version>)')
   
             # Obter a versão mais recente do GitHub Package
-            LATEST_VERSION="${{ steps.latest_version.outputs.version }}"
-            if [ -z "$LATEST_VERSION" ]; then
+            VERSIONS_COUNT="${{ steps.latest_version.outputs.count }}"
+            if [ -z "$VERSIONS_COUNT" ]; then
               echo "No latest version found, setting initial version to 1.0.0"
               NEW_VERSION="1.0.0"
             else
