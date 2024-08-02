@@ -7,6 +7,9 @@ on:
 jobs:
   increment-version:
     runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.increment_version.outputs.new_version }}
+
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
@@ -43,10 +46,12 @@ jobs:
           else
             # Remover a palavra "SNAPSHOT" da versão
             VERSION_CLEAN=${VERSION/-SNAPSHOT/}
+            
             # Separar a versão em partes
             IFS='.' read -ra ADDR <<< "$VERSION_CLEAN"
             MAJOR=${ADDR[0]}
             MINOR=${ADDR[1]}
+            
             # Gerar o PATCH no formato DDMMAAAAHHMMSS
             PATCH=$(date +'%d%m%Y%H%M%S')
 
@@ -55,18 +60,19 @@ jobs:
           fi            
           # Atualizar a versão na linha 9 do pom.xml
           sed -i '9s/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
+          
           # Exibir a nova versão para depuração
           echo "Updated version: $NEW_VERSION"
+          
           # echo "::set-output name=new_version::$NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-      
+
+
       - name: Save updated pom.xml for next steps
         uses: actions/upload-artifact@v3
         with:
           name: updated-pom
           path: pom.xml
-    outputs:
-      new_version: ${{ steps.increment_version.outputs.new_version }}
 
   build:
     runs-on: ubuntu-latest
@@ -120,7 +126,7 @@ jobs:
 
   create_package_github:
     runs-on: ubuntu-latest
-    needs: [increment-version, build, test]
+    needs: [build, test]
     permissions:
       contents: read
       packages: write
@@ -157,11 +163,11 @@ jobs:
 
   comment:
     runs-on: ubuntu-latest
-    needs: create_package_github
+    needs: [create_package_github, increment-version]
     steps:
       - name: Post comment
         uses: dacbd/create-issue-action@main
         with:
           token: ${{ secrets.GH_TOKEN }}
-          title: Nova versão disponibilzada - needs.increment-version.outputs.new_version
+          title: Nova versão disponibilzada - ${{ needs.increment-version.outputs.new_version }}
           body: "A new version ${{ needs.increment-version.outputs.new_version }} has been created successfully."
