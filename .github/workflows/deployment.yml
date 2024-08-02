@@ -21,7 +21,9 @@ jobs:
             PACKAGE_NAME="commons-utils"
             AUTH="Authorization: token ${{ secrets.GITHUB_TOKEN }}"
             API_URL="https://api.github.com"
-            VERSIONS_COUNT=$(curl -H "$AUTH" "$API_URL/orgs/{owner}/packages/maven/$PACKAGE_NAME/versions" | jq '. | length')
+            OWNER=$(echo "$REPO" | cut -d'/' -f1)
+            VERSIONS=$(curl -H "$AUTH" "$API_URL/orgs/$OWNER/packages/maven/$PACKAGE_NAME/versions")
+            VERSIONS_COUNT=$(echo "$VERSIONS" | jq '. | length')
             echo "::set-output name=count::$VERSIONS_COUNT"
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,10 +39,12 @@ jobs:
             MAJOR=${ADDR[0]}
             MINOR=${ADDR[1]}
             # Usar a contagem de versões para definir a nova versão
-            PATCH=${{ steps.versions_count.outputs.count }}
-            NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 2 + 1))"
+            PATCH=$(( ${{ steps.versions_count.outputs.count }} + 1 ))
+            NEW_VERSION="$MAJOR.$MINOR.$PATCH"
             # Atualizar a versão na linha 9 do pom.xml
             sed -i '9s/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
+            # Exibir a nova versão para depuração
+            echo "Updated version: $NEW_VERSION"
         - name: Save updated pom.xml for next steps
           uses: actions/upload-artifact@v3
           with:
