@@ -14,15 +14,7 @@ jobs:
           with:
             distribution: 'temurin'
             java-version: 17
-        - name: Print API Response
-          run: |
-            REPO="sironAzevedo/commons-utils"
-            PACKAGE_NAME="commons-utils"
-            AUTH="Authorization: token ${{ secrets.GITHUB_TOKEN }}"
-            API_URL="https://api.github.com"
-            OWNER=$(echo "$REPO" | cut -d'/' -f1)
-            RESPONSE=$(curl -H "$AUTH" "$API_URL/orgs/sironAzevedo/packages/maven/$PACKAGE_NAME/versions")
-            echo "API Response: $RESPONSE"
+        
         - name: Get GitHub Packages versions count
           id: latest_version
           run: |
@@ -31,8 +23,9 @@ jobs:
             AUTH="Authorization: token ${{ secrets.GITHUB_TOKEN }}"
             API_URL="https://api.github.com"
             OWNER=$(echo "$REPO" | cut -d'/' -f1)
-            LATEST_VERSION=$(curl -H "$AUTH" "$API_URL/orgs/$OWNER/packages/maven/$PACKAGE_NAME/versions" | jq -r 'map(select(.metadata.container.tags | index("latest")))[0].name')
-            echo "::set-output name=version::$LATEST_VERSION"
+            VERSIONS=$(curl -H "$AUTH" "$API_URL/orgs/$OWNER/packages/maven/$PACKAGE_NAME/versions")
+            VERSIONS_COUNT=$(echo "$VERSIONS" | jq '. | length')
+            echo "::set-output name=count::$VERSIONS_COUNT"
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         - name: Increment version
@@ -44,19 +37,31 @@ jobs:
               echo "No latest version found, setting initial version to 1.0.0"
               NEW_VERSION="1.0.0"
             else
-              # Separar a versão em partes
-              VERSION_CLEAN=${LATEST_VERSION/-SNAPSHOT/}
-              IFS='.' read -ra ADDR <<< "$VERSION_CLEAN"
-              MAJOR=${ADDR[0]}
-              MINOR=${ADDR[1]}
-              PATCH=${ADDR[2]}
-              # Incrementar o PATCH
-              NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
-            fi
-            # Atualizar a versão na linha 9 do pom.xml
-            sed -i '9s/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
-            # Exibir a nova versão para depuração
-            echo "Updated version: $NEW_VERSION"
+              # Obter a versão atual da linha 9 do pom.xml
+              VERSION=$(sed -n '9p' pom.xml | grep -oP '(?<=<version>).*(?=</version>)')
+    
+              # Obter a versão mais recente do GitHub Package
+              LATEST_VERSION="${{ steps.latest_version.outputs.count }}"
+              if [ -z "$LATEST_VERSION" ]; then
+                echo "No latest version found, setting initial version to 1.0.0"
+                NEW_VERSION="1.0.0"
+              else
+                # Remover a palavra "SNAPSHOT" da versão
+                VERSION_CLEAN=${VERSION/-SNAPSHOT/}
+                # Separar a versão em partes
+                IFS='.' read -ra ADDR <<< "$VERSION_CLEAN"
+                MAJOR=${ADDR[0]}
+                MINOR=${ADDR[1]}
+                # Gerar o PATCH no formato DDMMAAAAHHMMSS
+                PATCH=$(date +'%d%m%Y%H%M%S')
+    
+                # Montar a nova versão
+                NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+              fi            
+              # Atualizar a versão na linha 9 do pom.xml
+              sed -i '9s/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
+              # Exibir a nova versão para depuração
+              echo "Updated version: $NEW_VERSION"
         - name: Save updated pom.xml for next steps
           uses: actions/upload-artifact@v3
           with:
