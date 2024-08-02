@@ -17,7 +17,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
-      
+
       - name: Get GitHub Packages versions count
         id: latest_version
         run: |
@@ -31,7 +31,7 @@ jobs:
           echo "::set-output name=count::$VERSIONS_COUNT"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Increment version
         id: increment_version
         run: |
@@ -46,12 +46,12 @@ jobs:
           else
             # Remover a palavra "SNAPSHOT" da versão
             VERSION_CLEAN=${VERSION/-SNAPSHOT/}
-            
+          
             # Separar a versão em partes
             IFS='.' read -ra ADDR <<< "$VERSION_CLEAN"
             MAJOR=${ADDR[0]}
             MINOR=${ADDR[1]}
-            
+          
             # Gerar o PATCH no formato DDMMAAAAHHMMSS
             PATCH=$(date +'%d%m%Y%H%M%S')
 
@@ -101,7 +101,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [increment-version, build]
     steps:
       - uses: actions/checkout@v4
       - name: Download updated pom.xml
@@ -126,7 +126,7 @@ jobs:
 
   create_package_github:
     runs-on: ubuntu-latest
-    needs: [build, test]
+    needs: [increment-version, build, test]
     permissions:
       contents: read
       packages: write
