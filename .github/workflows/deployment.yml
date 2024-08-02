@@ -28,6 +28,7 @@ jobs:
             echo "::set-output name=count::$VERSIONS_COUNT"
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
         - name: Increment version
           id: increment_version
           run: |
@@ -56,11 +57,14 @@ jobs:
             sed -i '9s/<version>.*<\/version>/<version>'$NEW_VERSION'<\/version>/' pom.xml
             # Exibir a nova versão para depuração
             echo "Updated version: $NEW_VERSION"
+            echo "::set-output name=new_version::$NEW_VERSION"
         - name: Save updated pom.xml for next steps
           uses: actions/upload-artifact@v3
           with:
             name: updated-pom
             path: pom.xml
+      outputs:
+        new_version: ${{ steps.increment_version.outputs.new_version }}
 
     build:
         runs-on: ubuntu-latest
@@ -148,3 +152,14 @@ jobs:
           run: mvn --batch-mode deploy
           env:
             GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    comment:
+        needs: create_package_github
+        runs-on: ubuntu-latest
+    
+        steps:
+          - name: Post comment
+            uses: dacbd/create-issue-action@main
+            with:
+              token: ${{ secrets.GH_TOKEN }}
+              title: Nova versão disponibilzada - ${{ needs.increment-version.outputs.new_version }}
+              body: "A new version ${{ needs.increment-version.outputs.new_version }} has been created successfully."
