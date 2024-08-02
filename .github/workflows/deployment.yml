@@ -21,7 +21,7 @@ jobs:
             AUTH="Authorization: token ${{ secrets.GITHUB_TOKEN }}"
             API_URL="https://api.github.com"
             OWNER=$(echo "$REPO" | cut -d'/' -f1)
-            RESPONSE=$(curl -H "$AUTH" "$API_URL/orgs/$OWNER/packages/maven/$PACKAGE_NAME/versions")
+            RESPONSE=$(curl -H "$AUTH" "$API_URL/orgs/packages/maven/$PACKAGE_NAME/versions")
             echo "API Response: $RESPONSE"
         - name: Get GitHub Packages versions count
           id: latest_version
