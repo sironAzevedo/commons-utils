@@ -163,5 +163,5 @@ jobs:
         uses: dacbd/create-issue-action@main
         with:
           token: ${{ secrets.GH_TOKEN }}
-          title: Nova versão disponibilzada - ${{ needs.increment-version.outputs.new_version }}
+          title: Nova versão disponibilzada - needs.increment-version.outputs.new_version
           body: "A new version ${{ needs.increment-version.outputs.new_version }} has been created successfully."
