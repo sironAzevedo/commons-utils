@@ -19,7 +19,7 @@ import java.util.List;
 @Configuration
 @EnableCaching
 @ConditionalOnProperty(
-        value = {"cache.enabled"},
+        value = "cache.enabled",
         havingValue = "true",
         matchIfMissing = true
 )
@@ -29,7 +29,7 @@ public class MultipleCacheConfig {
     @Bean(
             name = {"CompositeCacheManager"}
     )
-    public CacheManager getCompositeCacheManager(List<CacheManager> existingCacheManagers) {
+    public CompositeCacheManager getCompositeCacheManager(List<CacheManager> existingCacheManagers) {
         CompositeCacheManager compositeCacheManager = new CompositeCacheManager();
         List<CacheManager> cacheManagers = new ArrayList<>();
         if (!CollectionUtils.isEmpty(existingCacheManagers)) {
