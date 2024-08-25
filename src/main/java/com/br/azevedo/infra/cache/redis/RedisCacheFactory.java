@@ -41,7 +41,8 @@ import java.util.stream.Collectors;
 )
 @ConditionalOnProperty(
         value = {"cache.redis.enabled"},
-        havingValue = "true"
+        havingValue = "true",
+        matchIfMissing = true
 )
 public class RedisCacheFactory implements CachingConfigurer {
 
