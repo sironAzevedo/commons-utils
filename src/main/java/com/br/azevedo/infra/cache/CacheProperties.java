@@ -1,7 +1,5 @@
 package com.br.azevedo.infra.cache;
 
-import com.br.azevedo.infra.cache.ehCache.EhCacheProperties;
-import com.br.azevedo.infra.cache.redis.RedisProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +13,5 @@ import java.util.List;
 @AllArgsConstructor
 @ConfigurationProperties("cache")
 public class CacheProperties {
-    private RedisProperties redis;
-    private EhCacheProperties ehCache;
     private List<CacheConfigurationProperties> caches = new ArrayList<>();
 }

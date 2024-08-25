@@ -61,10 +61,10 @@ cache:
 OBS.: O valor do parametro cacheName, deverá ser igual colocado na anotação @Cacheable, por exemplo: user_services_cliente_por_email  
 ````
 @Override
-	@Cacheable(value = "user_services_cliente_por_email", key = "#email", unless="#result == null")
-	public UserDTO findByEmail(String email) {
-		return repo.findByEmail(email).map(UserMapper.INSTANCE::toDTO).orElseThrow(() -> new UserException("Usuario não encontrado"));
-	}
+@Cacheable(value = "user_services_cliente_por_email", key = "#email", unless="#result == null")
+public UserDTO findByEmail(String email) {
+    return repo.findByEmail(email).map(UserMapper.INSTANCE::toDTO).orElseThrow(() -> new UserException("Usuario não encontrado"));
+}
 ````
 
 OBS.: Caso o cache seja habilitado e você não especificar a configuração de cada cache na lista de caches "caches[0]:" a biblioteca irá buscas os metodos anotados com @Cacheable

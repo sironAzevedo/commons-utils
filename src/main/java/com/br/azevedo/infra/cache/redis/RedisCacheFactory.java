@@ -20,6 +20,7 @@ import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisPassword;
@@ -95,6 +96,7 @@ public class RedisCacheFactory implements CachingConfigurer {
         return manager;
     }
 
+    @Lazy
     @Bean
     @Override
     public CacheErrorHandler errorHandler() {
