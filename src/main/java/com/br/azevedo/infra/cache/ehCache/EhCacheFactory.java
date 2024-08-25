@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.jcache.JCacheCacheManager;
+import org.springframework.cache.support.CompositeCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,11 +21,9 @@ import java.util.Objects;
 
 @Slf4j
 @Configuration
-@ConditionalOnBean(
-        name = {"CompositeCacheManager"}
-)
+@ConditionalOnBean(CompositeCacheManager.class)
 @ConditionalOnProperty(
-        value = {"cache.ehCache.enabled"},
+        value = "cache.ehCache.enabled",
         havingValue = "true"
 )
 public class EhCacheFactory {

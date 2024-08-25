@@ -18,6 +18,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.interceptor.CacheErrorHandler;
+import org.springframework.cache.support.CompositeCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -36,11 +37,9 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Configuration
-@ConditionalOnBean(
-        name = {"CompositeCacheManager"}
-)
+@ConditionalOnBean(CompositeCacheManager.class)
 @ConditionalOnProperty(
-        value = {"cache.redis.enabled"},
+        value = "cache.redis.enabled",
         havingValue = "true",
         matchIfMissing = true
 )
@@ -48,10 +47,10 @@ public class RedisCacheFactory implements CachingConfigurer {
 
     @Bean
     public LettuceConnectionFactory redisConnectionFactory(
-            @Value("${cache.redis.config.host}") String host,
-            @Value("${cache.redis.config.port}") Integer port,
-            @Value("${cache.redis.config.database}") Integer database,
-            @Value("${cache.redis.config.password}") String password
+            @Value("${cache.redis.host}") String host,
+            @Value("${cache.redis.port}") Integer port,
+            @Value("${cache.redis.database}") Integer database,
+            @Value("${cache.redis.password}") String password
     ) {
 
         log.info("Inicio - Configurando as conexões do cache distribudido");
