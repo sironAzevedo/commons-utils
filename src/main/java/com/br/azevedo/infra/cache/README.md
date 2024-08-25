@@ -57,6 +57,14 @@ cache:
         cacheName: user_services_cliente_login_email
         expiration: ${CACHE_DURATION_CONSULTA_LOGIN_EMAIL:PT24H}
 ````
+Por padrão o cache redis é habilitado, caso o mesmo seja desabilitado explicitamente o cache local "ehCache" será habilitado automaticamene, ou seja,
+a aplicação sempre terá um cache habilitado, seja o distribuido (redis) ou o local ehCache. Se não quiser ter nenhum cache habilitado
+desative o cache explicitamente, conforme exemplo abaixo:
+
+````
+cache:
+    enabled: false
+````
 
 OBS.: O valor do parametro cacheName, deverá ser igual colocado na anotação @Cacheable, por exemplo: user_services_cliente_por_email  
 ````
