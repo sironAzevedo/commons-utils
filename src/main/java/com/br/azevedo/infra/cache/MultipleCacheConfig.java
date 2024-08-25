@@ -27,19 +27,18 @@ public class MultipleCacheConfig {
 
     @Primary
     @Bean(
-            name = {"CompositeCacheManager"}
+            name = {"compositeCacheManager"}
     )
     public CompositeCacheManager getCompositeCacheManager(List<CacheManager> existingCacheManagers) {
         CompositeCacheManager compositeCacheManager = new CompositeCacheManager();
-        List<CacheManager> cacheManagers = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(existingCacheManagers)) {
-            log.info("MultipleCacheConfig.getCompositeCacheManager:Start");
-            existingCacheManagers.forEach(cacheManager -> log.info("Caches habilitados: {}", StringUtils.join(cacheManager.getCacheNames(), ", ")));
-            cacheManagers.addAll(existingCacheManagers);
-            log.info("MultipleCacheConfig.getCompositeCacheManager:End");
-        }
-
+        List<CacheManager> cacheManagers = new ArrayList<>(existingCacheManagers);
         cacheManagers.add(new NoOpCacheManager());
+
+        log.info("MultipleCacheConfig.getCompositeCacheManager:Start");
+        existingCacheManagers.forEach(cacheManager -> log.info("Caches habilitados: {}", StringUtils.join(cacheManager.getCacheNames(), ", ")));
+        cacheManagers.addAll(existingCacheManagers);
+        log.info("MultipleCacheConfig.getCompositeCacheManager:End");
+
         compositeCacheManager.setCacheManagers(cacheManagers);
         return compositeCacheManager;
     }

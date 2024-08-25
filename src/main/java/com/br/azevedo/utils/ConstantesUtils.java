@@ -13,4 +13,8 @@ public final class ConstantesUtils {
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     );
 
+    public static String[] PACKAGES = {
+            "br.com", "com.br", "com.br.azevedo"
+    };
+
 }

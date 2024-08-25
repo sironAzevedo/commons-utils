@@ -7,9 +7,13 @@ import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ExpiryPolicyBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.jsr107.Eh107Configuration;
+import org.reflections.Reflections;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.util.ConfigurationBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.jcache.JCacheCacheManager;
 import org.springframework.cache.support.CompositeCacheManager;
 import org.springframework.context.annotation.Bean;
@@ -17,15 +21,19 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.br.azevedo.utils.ConstantesUtils.PACKAGES;
 
 @Slf4j
 @Configuration
 @ConditionalOnBean(CompositeCacheManager.class)
-@ConditionalOnProperty(
-        value = "cache.ehCache.enabled",
-        havingValue = "true"
-)
+@ConditionalOnExpression("'${cache.redis.enabled}'.equals('false')")
 public class EhCacheFactory {
 
     @Bean("EhCache")
@@ -34,6 +42,7 @@ public class EhCacheFactory {
         CachingProvider cachingProvider = Caching.getCachingProvider();
         javax.cache.CacheManager cacheManager = cachingProvider.getCacheManager();
 
+        addCacheDefault(cacheManager, cacheProperties.getCaches());
         addNewCaches(cacheProperties, cacheManager);
 
         log.info("FIM - Configuracao do cache local com EhCache");
@@ -43,8 +52,7 @@ public class EhCacheFactory {
     private void addNewCaches(CacheProperties cacheProperties, javax.cache.CacheManager cacheManager) {
         cacheProperties.getCaches().forEach(cache -> {
             if (this.isNewCache(cacheManager, cache)) {
-                javax.cache.configuration.Configuration<Object, Object> ehCache3Config = this.createCacheConfiguration(cache);
-                cacheManager.createCache(cache.getCacheName(), ehCache3Config);
+                cacheManager.createCache(cache.getCacheName(), this.createCacheConfiguration(cache));
             }
         });
     }
@@ -60,5 +68,36 @@ public class EhCacheFactory {
                         CacheConfigurationBuilder
                                 .newCacheConfigurationBuilder(Object.class, Object.class, ResourcePoolsBuilder.heap(entries))
                                 .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(cacheConfiguration.getExpiration())));
+    }
+
+    private void addCacheDefault(javax.cache.CacheManager cacheManager, List<CacheConfigurationProperties> cachesExistentes) {
+        Set<String> methods = new Reflections(new ConfigurationBuilder()
+                .forPackages(PACKAGES)
+                .setScanners(new MethodAnnotationsScanner()))
+                .getMethodsAnnotatedWith(Cacheable.class)
+                .stream().map(method -> method.getAnnotation(Cacheable.class))
+                .flatMap(cacheable -> Arrays.stream(cacheable.value()))
+                .collect(Collectors.toSet());
+
+        Set<String> existingCacheNames = cachesExistentes.stream()
+                .map(CacheConfigurationProperties::getCacheName)
+                .collect(Collectors.toSet());
+
+        var newCache = methods.stream()
+                .filter(cacheName -> !existingCacheNames.contains(cacheName))
+                .collect(Collectors.toSet());
+
+
+        newCache.forEach( c -> {
+            CacheConfigurationProperties cache = CacheConfigurationProperties.builder()
+                    .cacheName(c)
+                    .heapEntries(20)
+                    .expiration(Duration.ofDays(1L))
+                    .build();
+
+            if (this.isNewCache(cacheManager, cache)) {
+                cacheManager.createCache(cache.getCacheName(), this.createCacheConfiguration(cache));
+            }
+        });
     }
 }
