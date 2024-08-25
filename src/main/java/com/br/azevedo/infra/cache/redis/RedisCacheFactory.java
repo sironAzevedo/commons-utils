@@ -113,7 +113,7 @@ public class RedisCacheFactory implements CachingConfigurer {
             CacheConfigurationProperties cache = CacheConfigurationProperties
                     .builder()
                     .cacheName(initialCache)
-                    .expiration(Duration.ZERO)
+                    .expiration(Duration.ofDays(1L))
                     .build();
 
             cacheConfigurations.put(cache.getCacheName(), this.cacheConfiguration(cache));
@@ -130,7 +130,7 @@ public class RedisCacheFactory implements CachingConfigurer {
 
     private Set<String> getCacheNames(List<CacheConfigurationProperties> cachesExistentes) {
         Set<String> methods = new Reflections(new ConfigurationBuilder()
-                .forPackages("br.com")
+                .forPackages("br.com", "com.br", "com.br.azevedo")
                 .setScanners(new MethodAnnotationsScanner()))
                 .getMethodsAnnotatedWith(Cacheable.class)
                 .stream().map(method -> method.getAnnotation(Cacheable.class))
