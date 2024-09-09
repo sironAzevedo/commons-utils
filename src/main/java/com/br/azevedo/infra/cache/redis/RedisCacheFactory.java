@@ -1,5 +1,6 @@
 package com.br.azevedo.infra.cache.redis;
 
+import com.br.azevedo.infra.cache.AbstractCacheConfig;
 import com.br.azevedo.infra.cache.CacheConfigurationProperties;
 import com.br.azevedo.infra.cache.CacheProperties;
 import io.lettuce.core.ClientOptions;
@@ -8,19 +9,8 @@ import io.lettuce.core.resource.Delay;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.util.ConfigurationBuilder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.interceptor.CacheErrorHandler;
-import org.springframework.cache.support.CompositeCacheManager;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -33,28 +23,15 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
 import java.time.Duration;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
-@Configuration
-@ConditionalOnBean(CompositeCacheManager.class)
-@ConditionalOnProperty(
-        value = "cache.redis.enabled",
-        havingValue = "true",
-        matchIfMissing = true
-)
-public class RedisCacheFactory implements CachingConfigurer {
+@Configuration(proxyBeanMethods = false)
+public class RedisCacheFactory extends AbstractCacheConfig implements CachingConfigurer {
 
-    @Bean
-    public LettuceConnectionFactory redisConnectionFactory(
-            @Value("${cache.redis.host}") String host,
-            @Value("${cache.redis.port}") Integer port,
-            @Value("${cache.redis.database}") Integer database,
-            @Value("${cache.redis.password}") String password
-    ) {
-
-        log.info("Inicio - Configurando as conexões do cache distribudido");
+    public LettuceConnectionFactory redisConnectionFactory(CacheProperties redisProperties) {
         var clientResources = ClientResources.builder()
                 .reconnectDelay(Delay.constant(Duration.ofSeconds(10)))
                 .build();
@@ -68,57 +45,43 @@ public class RedisCacheFactory implements CachingConfigurer {
                 .clientResources(clientResources)
                 .build();
 
-        RedisStandaloneConfiguration standaloneConfiguration = new RedisStandaloneConfiguration(host, port);
-        if (StringUtils.isNotEmpty(password)) {
-            standaloneConfiguration.setPassword(RedisPassword.of(password));
+        RedisStandaloneConfiguration standaloneConfiguration = new RedisStandaloneConfiguration(redisProperties.getRedis().getConfig().getHost(), redisProperties.getRedis().getConfig().getPort());
+        if (StringUtils.isNotEmpty(redisProperties.getRedis().getConfig().getPassword())) {
+            standaloneConfiguration.setPassword(RedisPassword.of(redisProperties.getRedis().getConfig().getPassword()));
         }
 
         LettuceConnectionFactory factory = new LettuceConnectionFactory(standaloneConfiguration, clientConfig);
         factory.setShareNativeConnection(false);
-        factory.afterPropertiesSet();
-        log.info("Fim - Configurando as conexões do cache distribudido");
         return factory;
     }
 
-    @Bean
-    public CacheManager cacheManagerRedis(LettuceConnectionFactory connectionFactory, CacheProperties cacheProperties) {
-        log.info("INICIO - Configuracao do CacheManager para o cache distribuido");
+    public RedisCacheManager cacheManagerRedis(List<CacheConfigurationProperties> cacheConfigurationProperties, CacheProperties redisProperties) {
+        try {
+            var cacheConfigurations = new HashMap<String, RedisCacheConfiguration>();
+            addCaches(cacheConfigurations, cacheConfigurationProperties);
 
-        var cacheConfigurations = new HashMap<String, RedisCacheConfiguration>();
-        addCacheDefault(cacheConfigurations, getCacheNames(cacheProperties.getCaches()));
-        addNewCaches(cacheProperties, cacheConfigurations);
-
-        var manager = RedisCacheManager.builder(connectionFactory)
-                .disableCreateOnMissingCache()
-                .withInitialCacheConfigurations(cacheConfigurations)
-                .build();
-
-        log.info("FIM - Configuracao do CacheManager para o cache distribuido");
-        return manager;
+            LettuceConnectionFactory connectionFactory = this.redisConnectionFactory(redisProperties);
+            connectionFactory.afterPropertiesSet();
+            return RedisCacheManager.builder(connectionFactory)
+                    .withInitialCacheConfigurations(cacheConfigurations)
+                    .disableCreateOnMissingCache()
+                    .transactionAware()
+                    .build();
+        } catch (Exception e) {
+            log.error("Erro ao configurar o cacheManagerRedis", e);
+        }
+        return null;
     }
 
     @Lazy
-    @Bean
     @Override
     public CacheErrorHandler errorHandler() {
         log.info("Configurando cacheErrorHandler Personalizado para o cache distribuido");
         return new CustomCacheErrorHandler();
     }
 
-    private void addNewCaches(CacheProperties cacheProperties, Map<String, RedisCacheConfiguration> cacheConfigurations) {
-        cacheProperties.getCaches().forEach(cache -> cacheConfigurations.put(cache.getCacheName(), this.cacheConfiguration(cache)));
-    }
-
-    private void addCacheDefault(Map<String, RedisCacheConfiguration> cacheConfigurations, Set<String> cacheNames) {
-        cacheNames.forEach(initialCache -> {
-            CacheConfigurationProperties cache = CacheConfigurationProperties
-                    .builder()
-                    .cacheName(initialCache)
-                    .expiration(Duration.ofDays(1L))
-                    .build();
-
-            cacheConfigurations.put(cache.getCacheName(), this.cacheConfiguration(cache));
-        });
+    private void addCaches(Map<String, RedisCacheConfiguration> cacheConfigurations, List<CacheConfigurationProperties> cacheConfigurationProperties) {
+       cacheConfigurationProperties.forEach(cache -> cacheConfigurations.put(cache.getCacheName(), this.cacheConfiguration(cache)));
     }
 
     private RedisCacheConfiguration cacheConfiguration(CacheConfigurationProperties cache) {
@@ -127,25 +90,5 @@ public class RedisCacheFactory implements CachingConfigurer {
                 .entryTtl(ObjectUtils.defaultIfNull(cache.getExpiration(), Duration.ZERO))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.string()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.json()));
-    }
-
-    private Set<String> getCacheNames(List<CacheConfigurationProperties> cachesExistentes) {
-        Set<String> methods = new Reflections(new ConfigurationBuilder()
-                .forPackages("br.com", "com.br", "com.br.azevedo")
-                .setScanners(new MethodAnnotationsScanner()))
-                .getMethodsAnnotatedWith(Cacheable.class)
-                .stream().map(method -> method.getAnnotation(Cacheable.class))
-                .flatMap(cacheable -> Arrays.stream(cacheable.value()))
-                .collect(Collectors.toSet());
-
-        // Criar um HashSet diretamente para evitar duplicatas e otimizar o contains
-        Set<String> existingCacheNames = cachesExistentes.stream()
-                .map(CacheConfigurationProperties::getCacheName)
-                .collect(Collectors.toSet());
-
-        // Filtrar diretamente em um HashSet para remover duplicatas e não existentes
-        return methods.stream()
-                .filter(cacheName -> !existingCacheNames.contains(cacheName))
-                .collect(Collectors.toSet());
     }
 }
