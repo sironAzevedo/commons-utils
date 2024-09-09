@@ -1,5 +1,7 @@
 package com.br.azevedo.infra.cache;
 
+import com.br.azevedo.infra.cache.ehCache.EhCacheFactory;
+import com.br.azevedo.infra.cache.redis.RedisCacheFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -12,34 +14,60 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
-@Configuration
 @EnableCaching
 @ConditionalOnProperty(
         value = "cache.enabled",
         havingValue = "true",
         matchIfMissing = true
 )
-public class MultipleCacheConfig {
+@Configuration(proxyBeanMethods = false)
+public class MultipleCacheConfig extends AbstractCacheConfig {
+
+    private final Map<String, List<CacheConfigurationProperties>> caches;
+    private final CacheProperties cacheProperties;
+
+    public MultipleCacheConfig(CacheProperties cacheProperties, CacheProperties cacheProperties1) {
+        this.caches = getCaches(cacheProperties);
+        this.cacheProperties = cacheProperties1;
+    }
+
 
     @Primary
     @Bean(
             name = {"compositeCacheManager"}
     )
-    public CompositeCacheManager getCompositeCacheManager(List<CacheManager> existingCacheManagers) {
+    public CompositeCacheManager getCompositeCacheManager(
+            List<CacheManager> existingCacheManagers) {
+        log.info("MultipleCache: Start");
+
         CompositeCacheManager compositeCacheManager = new CompositeCacheManager();
-        List<CacheManager> cacheManagers = new ArrayList<>(existingCacheManagers);
-        cacheManagers.add(new NoOpCacheManager());
+        List<CacheManager> cacheManagers = new ArrayList<>();
+        List<CacheConfigurationProperties> ehCache = caches.get("ehCache");
+        if (!CollectionUtils.isEmpty(ehCache)) {
+            cacheManagers.add(new EhCacheFactory().ehCacheManager(ehCache));
+            compositeCacheManager.setCacheManagers(cacheManagers);
+        }
 
-        log.info("MultipleCacheConfig.getCompositeCacheManager:Start");
-        existingCacheManagers.forEach(cacheManager -> log.info("Caches habilitados: {}", StringUtils.join(cacheManager.getCacheNames(), ", ")));
-        cacheManagers.addAll(existingCacheManagers);
-        log.info("MultipleCacheConfig.getCompositeCacheManager:End");
+        if (!CollectionUtils.isEmpty(existingCacheManagers)) {
+            compositeCacheManager.setCacheManagers(existingCacheManagers);
+            Set<CacheManager> collect = new HashSet<>(existingCacheManagers);
+            log.info("Cache distribuidos habilitados: {}", StringUtils.join(collect.stream().map(CacheManager::getCacheNames).collect(Collectors.toSet()), ", "));
+        }
 
-        compositeCacheManager.setCacheManagers(cacheManagers);
+        log.info("MultipleCache: End");
         return compositeCacheManager;
+    }
+
+    @Bean
+    public CacheManager cacheManagerRedis() {
+        if (!cacheProperties.isEnabledRedis()) {
+            log.warn("Cache distribuido desabilitado");
+            return new NoOpCacheManager();
+        }
+        return new RedisCacheFactory().cacheManagerRedis(caches.get("redis"), this.cacheProperties);
     }
 }
