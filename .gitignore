@@ -14,7 +14,17 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/uiDesigner.xml
+.idea/**/usage.statistis.xml
+.idea/**/compiler.xml
+.idea/**/encodings.xml
+.idea/**/dbnavigator.xml
+.idea/**/jarRepositories.xml
+.idea/**/shelf
+.idea/**/dictionaries
+.idea/**/inspectionProfiles
 *.iws
 *.iml
 *.ipr
@@ -31,6 +41,3 @@ build/
 
 ### VS Code ###
 .vscode/
-.idea/
-.idea/workspace.xml
-
