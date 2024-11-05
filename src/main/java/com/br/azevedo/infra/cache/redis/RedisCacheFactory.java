@@ -19,13 +19,18 @@ import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.br.azevedo.utils.JsonUtils.objectMapper;
+import static com.br.azevedo.utils.JsonUtils.objectMapperRedis;
 
 @Slf4j
 @Configuration(proxyBeanMethods = false)
@@ -85,10 +90,11 @@ public class RedisCacheFactory extends AbstractCacheConfig implements CachingCon
     }
 
     private RedisCacheConfiguration cacheConfiguration(CacheConfigurationProperties cache) {
+        // Usar o ObjectMapper configurado no GenericJackson2JsonRedisSerializer
         return RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
                 .entryTtl(ObjectUtils.defaultIfNull(cache.getExpiration(), Duration.ZERO))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.string()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.json()));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapperRedis())));
     }
 }

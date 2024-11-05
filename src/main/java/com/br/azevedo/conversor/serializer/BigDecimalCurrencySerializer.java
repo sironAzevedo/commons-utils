@@ -17,7 +17,7 @@ public class BigDecimalCurrencySerializer extends StdSerializer<BigDecimal> {
     @Override
     public void serialize(BigDecimal value, JsonGenerator gen, SerializerProvider provider)
             throws IOException {
-        String formattedValue = MoedaUtils.BigDecimalToString(value);
+        String formattedValue = MoedaUtils.bigDecimalToString(value);
         gen.writeString(formattedValue);
     }
 }
