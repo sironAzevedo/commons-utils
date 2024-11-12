@@ -1,5 +1,6 @@
 package com.br.azevedo.model.vo;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -61,7 +62,12 @@ public class FieldMessage implements Serializable {
 		List<FieldMessage> result = new ArrayList<>();
 		fieldErrors.forEach(e -> {
 			FieldMessage fm = new FieldMessage();
-			fm.setFieldName(e.getField());
+			String field = e.getField();
+			if (field.contains(".")) {
+				String[] split = field.split("\\.");
+				field = StringUtils.isNotBlank(split[1]) ? split[1] :  field;
+			}
+			fm.setFieldName(field);
 			fm.setMessage(e.getDefaultMessage());
 			result.add(fm);
 		});		
