@@ -8,10 +8,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Repository;
 
-import static com.br.azevedo.utils.JsonUtils.jsonToObject;
 import static com.br.azevedo.utils.JsonUtils.objectMapper;
-import static com.br.azevedo.utils.JsonUtils.objectMapperRedis;
-import static com.br.azevedo.utils.JsonUtils.objetcToJson;
 
 @Slf4j
 @Repository
@@ -60,7 +57,7 @@ public class CacheRepositoryImpl implements ICacheRepository {
     public void saveCacheByNameAndKey(String cacheName, Object key, Object value) {
         Cache cache = cacheManager.getCache(cacheName);
         if (cache != null) {
-            cache.put(key, objetcToJson(value));
+            cache.put(key, value);
         }
     }
 
