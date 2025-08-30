@@ -41,3 +41,6 @@ build/
 
 ### VS Code ###
 .vscode/
+.idea/misc.xml
+/.idea
+.idea/workspace.xml
