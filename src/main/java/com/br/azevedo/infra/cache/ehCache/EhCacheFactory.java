@@ -10,26 +10,35 @@ import org.ehcache.jsr107.Eh107Configuration;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.jcache.JCacheCacheManager;
 import org.springframework.cache.support.NoOpCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
 
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
+@Configuration(proxyBeanMethods = false)
 public class EhCacheFactory {
 
-    public CacheManager ehCacheManager(List<CacheConfigurationProperties> cacheConfigurationProperties) {
+    @Lazy
+    @Bean
+    public CacheManager ehCacheManager(Map<String, List<CacheConfigurationProperties>> cachesConfig) {
         try {
+            List<CacheConfigurationProperties> ehCacheProps = cachesConfig.get("ehCache");
 
-            if (CollectionUtils.isEmpty(cacheConfigurationProperties)) {
+            if (CollectionUtils.isEmpty(ehCacheProps)) {
+                // Se não há caches EhCache configurados, retorna um manager que não faz nada.
                 return new NoOpCacheManager();
             }
 
             CachingProvider cachingProvider = Caching.getCachingProvider();
             javax.cache.CacheManager cacheManager = cachingProvider.getCacheManager();
-            addCaches(cacheManager, cacheConfigurationProperties);
+            addCaches(cacheManager, ehCacheProps);
 
             log.info("Cache local habilitados: [{}]", StringUtils.join(cacheManager.getCacheNames(), ", "));
             return new JCacheCacheManager(cacheManager);
