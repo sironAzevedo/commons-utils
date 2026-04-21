@@ -1,6 +1,7 @@
 package com.br.azevedo.infra.cache.redis.repository;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.time.Duration;
 
 public interface ICacheRepository {
 
@@ -40,6 +41,16 @@ public interface ICacheRepository {
      * @param value o valor a ser armazenado no cache
      */
     void saveCacheByNameAndKey(String cacheName, Object key, Object value);
+
+    /**
+     * Salva um item no cache com base no nome do cache, na chave e no valor fornecidos, com TTL especificado.
+     *
+     * @param cacheName o nome do cache
+     * @param key a chave do item
+     * @param value o valor a ser armazenado no cache
+     * @param ttl o tempo de vida do item no cache, se null usa o TTL padrão do cache
+     */
+    void saveCacheByNameAndKey(String cacheName, Object key, Object value, Duration ttl);
 
     /**
      * Limpa todos os dados de um cache com base no nome fornecido.

@@ -76,7 +76,7 @@ public abstract class AbstractCacheConfig {
             CacheConfigurationProperties cacheConfig = CacheConfigurationProperties.builder()
                     .cacheName(cacheName)
                     .heapEntries(20)
-                    .expiration(Duration.ofDays(1L))
+                    .expiration(Duration.ZERO)
                     .build();
 
             if (cacheProperties.isEnabledRedis()) {

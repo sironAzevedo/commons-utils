@@ -6,7 +6,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
+
+import java.time.Duration;
 
 import static com.br.azevedo.utils.JsonUtils.objectMapper;
 
@@ -14,26 +17,26 @@ import static com.br.azevedo.utils.JsonUtils.objectMapper;
 @Repository
 @RequiredArgsConstructor
 public class CacheRepositoryImpl implements ICacheRepository {
-    public static final String NÃO_FOI_LOCALIZADO_NENHUM_CACHE_COM_A_CHAVE = "Não foi localizado nenhum cache com a chave {}";
+    public static final String NAO_FOI_LOCALIZADO_NENHUM_CACHE_COM_A_CHAVE = "Não foi localizado nenhum cache com a chave {}";
     private final CacheManager cacheManager;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public void removeCacheByNameAndKey(String cacheName, Object key) {
-        Cache cache = cacheManager.getCache(cacheName);
+        String fullKey = cacheName + "::" + key.toString();
+        Cache cache = cacheManager.getCache(fullKey);
         if (cache == null) {
-            log.warn(NÃO_FOI_LOCALIZADO_NENHUM_CACHE_COM_A_CHAVE, key);
+            log.warn(NAO_FOI_LOCALIZADO_NENHUM_CACHE_COM_A_CHAVE, key);
             return;
         }
-        cache.evictIfPresent(key);
+        cache.evictIfPresent(fullKey);
     }
 
     @Override
     public <T> T getCacheByNameAndKey(String cacheName, Object key, Class<T> returnType) {
-        Cache cache = cacheManager.getCache(cacheName);
-        if (cache != null) {
-            return cache.get(key, returnType);
-        }
-        return null;
+        String fullKey = cacheName + "::" + key.toString();
+        Cache cache = cacheManager.getCache(fullKey);
+        return (T)(cache != null ? cache.get(key, returnType) : null);
     }
 
     @Override
@@ -55,9 +58,23 @@ public class CacheRepositoryImpl implements ICacheRepository {
 
     @Override
     public void saveCacheByNameAndKey(String cacheName, Object key, Object value) {
+        saveCacheByNameAndKey(cacheName, key, value, null);
+    }
+
+    @Override
+    public void saveCacheByNameAndKey(String cacheName, Object key, Object value, Duration ttl) {
         Cache cache = cacheManager.getCache(cacheName);
-        if (cache != null) {
-            cache.put(key, value);
+        if (cache == null) {
+            log.warn("Cache {} não encontrado", cacheName);
+            return;
+        }
+        String fullKey = cacheName + "::" + key.toString();
+        if (ttl != null && ttl.toMillis() > 0) {
+            // Para TTL personalizado, usar RedisTemplate diretamente
+            redisTemplate.opsForValue().set(fullKey, value, ttl);
+        } else {
+            // Usar o cache padrão (TTL do cache ou sem expiração se ttl for zero/negativo)
+            redisTemplate.opsForValue().set(fullKey, value);
         }
     }
 
