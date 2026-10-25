@@ -7,7 +7,6 @@ import com.br.azevedo.utils.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.DeleteParameterRequest;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
@@ -30,7 +29,6 @@ import java.util.Optional;
  * com suporte a cache centralizado (Redis ou Ehcache) e TTL padrão de 24 horas.
  */
 @Slf4j
-@Service
 public class AwsParameterStoreServiceImpl implements AwsParameterStoreService {
 
     private final SsmClient ssmClient;

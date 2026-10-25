@@ -6,7 +6,6 @@ import com.br.azevedo.infra.aws.AwsProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -40,7 +39,6 @@ import java.util.stream.Stream;
  * Implementação padrão de operações com o Amazon S3 e geração de URLs pré-assinadas.
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class AwsS3StorageServiceImpl implements AwsS3StorageService {
 
