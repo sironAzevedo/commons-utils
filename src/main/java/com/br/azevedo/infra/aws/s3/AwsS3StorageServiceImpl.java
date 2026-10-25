@@ -78,8 +78,18 @@ public class AwsS3StorageServiceImpl implements AwsS3StorageService {
     }
 
     @Override
+    public URL generatePresignedUploadUrl(String bucket, String key, Duration duration) {
+        return generatePresignedUploadUrl(bucket, key, duration, null);
+    }
+
+    @Override
     public URL generatePresignedUploadUrl(String key, Duration duration, String contentType) {
         return generatePresignedUploadUrl(getDefaultBucket(), key, duration, contentType);
+    }
+
+    @Override
+    public URL generatePresignedUploadUrl(String key, Duration duration) {
+        return generatePresignedUploadUrl(getDefaultBucket(), key, duration, null);
     }
 
     @Override

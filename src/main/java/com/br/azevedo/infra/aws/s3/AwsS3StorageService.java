@@ -21,9 +21,19 @@ public interface AwsS3StorageService {
     URL generatePresignedUploadUrl(String bucket, String key, Duration duration, String contentType);
 
     /**
+     * Gera URL pré-assinada para upload de arquivo (PUT) sem contentType obrigatório.
+     */
+    URL generatePresignedUploadUrl(String bucket, String key, Duration duration);
+
+    /**
      * Gera URL pré-assinada para upload utilizando o bucket padrão configurado.
      */
     URL generatePresignedUploadUrl(String key, Duration duration, String contentType);
+
+    /**
+     * Gera URL pré-assinada para upload utilizando o bucket padrão configurado sem contentType.
+     */
+    URL generatePresignedUploadUrl(String key, Duration duration);
 
     /**
      * Gera URL pré-assinada para download de arquivo (GET).

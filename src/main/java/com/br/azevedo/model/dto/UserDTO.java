@@ -6,8 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
@@ -15,6 +17,8 @@ import java.util.List;
 
 @Setter
 @Getter
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -27,18 +31,33 @@ public class UserDTO implements Serializable {
 	private String name;
 	
 	@Email
-    @NotEmpty
+	@NotEmpty
 	private String email;
 
-	@NotEmpty
 	private String password;
+
+	private String provider;
+
+	private String providerId;
 
 	private UserStatusEnum status;
 
 	private List<PerfilEnum> perfis;
 
-	public UserDTO() {
-		super();
-	}
+	private String photo;
 
+	private String photoUploaded;
+
+	private Boolean photoUpdate;
+
+	private Boolean termsAgreed;
+
+	public UserDTO(Long id, String name, String email, String password, UserStatusEnum status, List<PerfilEnum> perfis) {
+		this.id = id;
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.status = status;
+		this.perfis = perfis;
+	}
 }
