@@ -8,6 +8,7 @@ O projeto `azevedo-commons-utils` é uma biblioteca Java que oferece utilitário
 - [Serializadores e Desserializadores](#serializadores-e-desserializadores)
 - [Exceções Personalizadas](#exceções-personalizadas)
 - [Infraestrutura](#infraestrutura)
+    - [AWS](#aws)
     - [Assíncrono](#assíncrono)
     - [Cache](#cache)
     - [Log](#log)
@@ -58,6 +59,16 @@ Localização: `com/br/azevedo/exception/`
 - **ValidationException**: Erros de validação.
 
 ## Infraestrutura
+
+### AWS
+
+Localização: `com/br/azevedo/infra/aws/`
+
+- **@EnableAws**: Anotação para habilitar a inicialização automática e centralizada dos serviços AWS configurados via `cloud.aws.services`.
+- **Serviços Suportados**: `s3`, `s3presigner`, `sqs`, `sns`, `ssm`, `secretsmanager`, `dynamodb`.
+- **AwsParameterStoreService**: Serviço centralizado para operações CRUD no AWS Systems Manager (SSM) Parameter Store (`get`, `find`, `getAsMap`, `putString`, `putSecureString`, `deleteParameter`, `getParametersByPath`). Conta com suporte nativo a **Cache (Redis/Ehcache)** com TTL padrão de 24 horas (ou customizável via método) e invalidação automática em mutações.
+- **AwsS3StorageService**: Serviço centralizado para operações no Amazon S3 (geração de URLs pré-assinadas de PUT e GET com inspeção de validade, upload/download, remoção, cópia, movimentação e validação de existência).
+- **Documentação detalhada**: Consulte [`EnableAws.md`](file:///Volumes/Externo/Develop/java/libs/azevedo-commons-utils/src/main/java/com/br/azevedo/infra/aws/EnableAws.md).
 
 ### Assíncrono
 
@@ -112,6 +123,7 @@ Localização: `com/br/azevedo/utils/`
 - **JsonUtils**: Utilitários para manipulação de JSON.
 - **MoedaUtils**: Utilitários para manipulação de moedas.
 - **PhoneUtils**: Utilitários para manipulação de telefones.
+- **EnvironmentUtils**: Utilitário genérico para resolução e consulta do ambiente de execução (profiles ativos como dev, hml, prd, staging) suportando injeção via Spring EnvironmentAware ou chamadas estáticas com fallback hierárquico.
 
 ## Validação
 
