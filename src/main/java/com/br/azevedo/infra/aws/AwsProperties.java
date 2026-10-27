@@ -1,6 +1,7 @@
 package com.br.azevedo.infra.aws;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class AwsProperties {
     /**
      * Configurações específicas para SSM (Parameter Store).
      */
-    private ServiceEndpointConfig ssm = new ServiceEndpointConfig();
+    private SsmConfig ssm = new SsmConfig();
 
     /**
      * Configurações específicas para Secrets Manager.
@@ -152,5 +153,18 @@ public class AwsProperties {
     @Data
     public static class ServiceEndpointConfig {
         private String endpoint;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    public static class SsmConfig extends ServiceEndpointConfig {
+        private CacheConfig cache = new CacheConfig();
+
+        @Data
+        public static class CacheConfig {
+            private Boolean encryptionEnabled = true;
+            private String secretKey;
+            private String cacheName;
+        }
     }
 }

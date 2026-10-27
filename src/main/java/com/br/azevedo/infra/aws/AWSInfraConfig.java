@@ -314,9 +314,14 @@ public class AWSInfraConfig {
     @ConditionalOnMissingBean(AwsParameterStoreService.class)
     public AwsParameterStoreService awsParameterStoreService(
             SsmClient ssmClient,
-            org.springframework.beans.factory.ObjectProvider<com.br.azevedo.infra.cache.redis.repository.ICacheRepository> cacheRepositoryProvider) {
-        log.info("Configurando o serviço centralizado AwsParameterStoreService com cache");
-        return new AwsParameterStoreServiceImpl(ssmClient, cacheRepositoryProvider.getIfAvailable());
+            org.springframework.beans.factory.ObjectProvider<com.br.azevedo.infra.cache.redis.repository.ICacheRepository> cacheRepositoryProvider,
+            org.springframework.core.env.Environment environment) {
+        log.info("Configurando o serviço centralizado AwsParameterStoreService com cache seguro (chaves mascaradas e valores criptografados)");
+        com.br.azevedo.infra.aws.ssm.SsmCacheCrypto crypto = new com.br.azevedo.infra.aws.ssm.SsmCacheCrypto(environment);
+        String customCacheName = awsProperties != null && awsProperties.getSsm() != null && awsProperties.getSsm().getCache() != null
+                ? awsProperties.getSsm().getCache().getCacheName()
+                : null;
+        return new AwsParameterStoreServiceImpl(ssmClient, cacheRepositoryProvider.getIfAvailable(), crypto, customCacheName);
     }
 
     /**

@@ -24,18 +24,39 @@ public class CacheRepositoryImpl implements ICacheRepository {
     @Override
     public void removeCacheByNameAndKey(String cacheName, Object key) {
         String fullKey = cacheName + "::" + key.toString();
-        Cache cache = cacheManager.getCache(fullKey);
-        if (cache == null) {
-            log.warn(NAO_FOI_LOCALIZADO_NENHUM_CACHE_COM_A_CHAVE, key);
-            return;
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.delete(fullKey);
+            }
+        } catch (Exception e) {
+            log.debug("Erro ao remover chave [{}] via RedisTemplate: {}", fullKey, e.getMessage());
         }
-        cache.evictIfPresent(fullKey);
+        Cache cache = cacheManager != null ? cacheManager.getCache(cacheName) : null;
+        if (cache != null) {
+            cache.evictIfPresent(key);
+        }
     }
 
     @Override
     public <T> T getCacheByNameAndKey(String cacheName, Object key, Class<T> returnType) {
         String fullKey = cacheName + "::" + key.toString();
-        Cache cache = cacheManager.getCache(fullKey);
+        try {
+            if (redisTemplate != null) {
+                Object directValue = redisTemplate.opsForValue().get(fullKey);
+                if (directValue != null) {
+                    if (returnType.isInstance(directValue)) {
+                        return returnType.cast(directValue);
+                    }
+                    if (returnType == String.class) {
+                        return returnType.cast(directValue.toString());
+                    }
+                    return objectMapper().convertValue(directValue, returnType);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Erro ao buscar chave [{}] via RedisTemplate: {}", fullKey, e.getMessage());
+        }
+        Cache cache = cacheManager != null ? cacheManager.getCache(cacheName) : null;
         return (T)(cache != null ? cache.get(key, returnType) : null);
     }
 

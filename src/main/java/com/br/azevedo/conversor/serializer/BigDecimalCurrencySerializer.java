@@ -3,12 +3,12 @@ package com.br.azevedo.conversor.serializer;
 import com.br.azevedo.utils.MoedaUtils;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 
-public class BigDecimalCurrencySerializer extends StdSerializer<BigDecimal> {
+public class BigDecimalCurrencySerializer extends StdScalarSerializer<BigDecimal> {
 
     public BigDecimalCurrencySerializer() {
         super(BigDecimal.class);

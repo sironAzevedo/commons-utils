@@ -70,11 +70,14 @@ class AwsParameterStoreServiceTest {
     }
 
     @Test
-    @DisplayName("Deve retornar do cache quando houver Cache HIT")
+    @DisplayName("Deve retornar do cache quando houver Cache HIT com valor criptografado e chave mascarada")
     void shouldReturnFromCacheOnHit() {
         String paramName = "/app/data/security/cripto-dev";
-        when(cacheRepository.getCacheByNameAndKey("ssm_parameter_by_name", paramName, String.class))
-                .thenReturn("master-key-cached");
+        String maskedKey = parameterStoreServiceWithCache.getSsmCacheCrypto().maskKey(paramName);
+        String encryptedValue = parameterStoreServiceWithCache.getSsmCacheCrypto().encrypt("master-key-cached");
+
+        when(cacheRepository.getCacheByNameAndKey("ssm_parameter_by_name", maskedKey, String.class))
+                .thenReturn(encryptedValue);
 
         String result = parameterStoreServiceWithCache.getParameter(paramName);
 
@@ -83,9 +86,28 @@ class AwsParameterStoreServiceTest {
     }
 
     @Test
-    @DisplayName("Deve buscar no SSM e salvar no cache com TTL padrão de 24 horas quando Cache MISS")
+    @DisplayName("Deve manter retrocompatibilidade com dados legados em texto claro no cache")
+    void shouldSupportLegacyPlainTextInCache() {
+        String paramName = "/app/data/security/legacy-key";
+        String maskedKey = parameterStoreServiceWithCache.getSsmCacheCrypto().maskKey(paramName);
+
+        when(cacheRepository.getCacheByNameAndKey("ssm_parameter_by_name", maskedKey, String.class))
+                .thenReturn(null);
+        when(cacheRepository.getCacheByNameAndKey("ssm_parameter_by_name", paramName, String.class))
+                .thenReturn("legacy-unencrypted-secret");
+
+        String result = parameterStoreServiceWithCache.getParameter(paramName);
+
+        assertEquals("legacy-unencrypted-secret", result);
+        verify(ssmClient, never()).getParameter(any(GetParameterRequest.class));
+    }
+
+    @Test
+    @DisplayName("Deve buscar no SSM e salvar no cache com chave mascarada e valor criptografado com TTL padrão")
     void shouldFetchFromSsmAndSaveToCacheWithDefaultTtlOnMiss() {
         String paramName = "/auth-api/jwt/credentials-dev";
+        String maskedKey = parameterStoreServiceWithCache.getSsmCacheCrypto().maskKey(paramName);
+
         GetParameterResponse response = GetParameterResponse.builder()
                 .parameter(Parameter.builder()
                         .name(paramName)
@@ -94,20 +116,27 @@ class AwsParameterStoreServiceTest {
                         .build())
                 .build();
 
-        when(cacheRepository.getCacheByNameAndKey("ssm_parameter_by_name", paramName, String.class))
+        when(cacheRepository.getCacheByNameAndKey("ssm_parameter_by_name", maskedKey, String.class))
                 .thenReturn(null);
         when(ssmClient.getParameter(any(GetParameterRequest.class))).thenReturn(response);
 
         String result = parameterStoreServiceWithCache.getParameter(paramName);
 
         assertEquals("token-from-ssm", result);
-        verify(cacheRepository).saveCacheByNameAndKey("ssm_parameter_by_name", paramName, "token-from-ssm", Duration.ofHours(24));
+        verify(cacheRepository).saveCacheByNameAndKey(
+                eq("ssm_parameter_by_name"),
+                eq(maskedKey),
+                org.mockito.ArgumentMatchers.argThat(val -> val != null && val.toString().startsWith("ENC:GCM:")),
+                eq(Duration.ofHours(24))
+        );
     }
 
     @Test
-    @DisplayName("Deve salvar no cache com TTL customizado de 7 dias quando especificado")
+    @DisplayName("Deve salvar no cache com TTL customizado de 7 dias com chave mascarada e valor criptografado")
     void shouldSaveToCacheWithCustomTtl() {
         String paramName = "/app/data/security/cripto-prod";
+        String maskedKey = parameterStoreServiceWithCache.getSsmCacheCrypto().maskKey(paramName);
+
         GetParameterResponse response = GetParameterResponse.builder()
                 .parameter(Parameter.builder()
                         .name(paramName)
@@ -116,14 +145,19 @@ class AwsParameterStoreServiceTest {
                         .build())
                 .build();
 
-        when(cacheRepository.getCacheByNameAndKey("ssm_parameter_by_name", paramName, String.class))
+        when(cacheRepository.getCacheByNameAndKey("ssm_parameter_by_name", maskedKey, String.class))
                 .thenReturn(null);
         when(ssmClient.getParameter(any(GetParameterRequest.class))).thenReturn(response);
 
         String result = parameterStoreServiceWithCache.getParameter(paramName, Duration.ofDays(7));
 
         assertEquals("custom-ttl-master-key", result);
-        verify(cacheRepository).saveCacheByNameAndKey("ssm_parameter_by_name", paramName, "custom-ttl-master-key", Duration.ofDays(7));
+        verify(cacheRepository).saveCacheByNameAndKey(
+                eq("ssm_parameter_by_name"),
+                eq(maskedKey),
+                org.mockito.ArgumentMatchers.argThat(val -> val != null && val.toString().startsWith("ENC:GCM:")),
+                eq(Duration.ofDays(7))
+        );
     }
 
     @Test
@@ -167,24 +201,30 @@ class AwsParameterStoreServiceTest {
     @Test
     @DisplayName("Deve salvar e invalidar cache")
     void shouldPutAndEvictCache() {
+        String paramName = "/test/secret";
+        String maskedKey = parameterStoreServiceWithCache.getSsmCacheCrypto().maskKey(paramName);
+
         when(ssmClient.putParameter(any(PutParameterRequest.class)))
                 .thenReturn(PutParameterResponse.builder().build());
 
-        parameterStoreServiceWithCache.putSecureStringParameter("/test/secret", "secret-val");
+        parameterStoreServiceWithCache.putSecureStringParameter(paramName, "secret-val");
 
         verify(ssmClient).putParameter(any(PutParameterRequest.class));
-        verify(cacheRepository).removeCacheByNameAndKey("ssm_parameter_by_name", "/test/secret");
+        verify(cacheRepository).removeCacheByNameAndKey("ssm_parameter_by_name", maskedKey);
     }
 
     @Test
     @DisplayName("Deve deletar e invalidar cache")
     void shouldDeleteAndEvictCache() {
+        String paramName = "/test/secret";
+        String maskedKey = parameterStoreServiceWithCache.getSsmCacheCrypto().maskKey(paramName);
+
         when(ssmClient.deleteParameter(any(DeleteParameterRequest.class)))
                 .thenReturn(DeleteParameterResponse.builder().build());
 
-        parameterStoreServiceWithCache.deleteParameter("/test/secret");
+        parameterStoreServiceWithCache.deleteParameter(paramName);
 
         verify(ssmClient).deleteParameter(any(DeleteParameterRequest.class));
-        verify(cacheRepository).removeCacheByNameAndKey("ssm_parameter_by_name", "/test/secret");
+        verify(cacheRepository).removeCacheByNameAndKey("ssm_parameter_by_name", maskedKey);
     }
 }

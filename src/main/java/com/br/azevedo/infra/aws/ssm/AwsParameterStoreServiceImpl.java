@@ -33,18 +33,42 @@ public class AwsParameterStoreServiceImpl implements AwsParameterStoreService {
 
     private final SsmClient ssmClient;
     private final ICacheRepository cacheRepository;
+    private final SsmCacheCrypto ssmCacheCrypto;
+    private final String cacheName;
 
     public static final String KEY_CACHE_SSM_DEFAULT = "ssm_parameter_by_name";
     private static final Duration DEFAULT_CACHE_TTL = Duration.ofHours(24);
 
     public AwsParameterStoreServiceImpl(SsmClient ssmClient) {
-        this(ssmClient, null);
+        this(ssmClient, null, null, null);
+    }
+
+    public AwsParameterStoreServiceImpl(SsmClient ssmClient, ICacheRepository cacheRepository) {
+        this(ssmClient, cacheRepository, null, null);
+    }
+
+    public AwsParameterStoreServiceImpl(SsmClient ssmClient, ICacheRepository cacheRepository, SsmCacheCrypto ssmCacheCrypto) {
+        this(ssmClient, cacheRepository, ssmCacheCrypto, null);
     }
 
     @Autowired
-    public AwsParameterStoreServiceImpl(SsmClient ssmClient, @Autowired(required = false) ICacheRepository cacheRepository) {
+    public AwsParameterStoreServiceImpl(
+            SsmClient ssmClient,
+            @Autowired(required = false) ICacheRepository cacheRepository,
+            @Autowired(required = false) SsmCacheCrypto ssmCacheCrypto,
+            @org.springframework.beans.factory.annotation.Value("${cloud.aws.ssm.cache.cache-name:}") String customCacheName) {
         this.ssmClient = ssmClient;
         this.cacheRepository = cacheRepository;
+        this.ssmCacheCrypto = ssmCacheCrypto != null ? ssmCacheCrypto : new SsmCacheCrypto();
+        this.cacheName = StringUtils.isNotBlank(customCacheName) ? customCacheName.trim() : KEY_CACHE_SSM_DEFAULT;
+    }
+
+    public SsmCacheCrypto getSsmCacheCrypto() {
+        return this.ssmCacheCrypto;
+    }
+
+    public String getCacheName() {
+        return this.cacheName;
     }
 
     @Override
@@ -239,9 +263,18 @@ public class AwsParameterStoreServiceImpl implements AwsParameterStoreService {
     private String getFromCache(String name) {
         if (cacheRepository == null) return null;
         try {
-            return cacheRepository.getCacheByNameAndKey(KEY_CACHE_SSM_DEFAULT, name, String.class);
+            String maskedKey = ssmCacheCrypto.maskKey(name);
+            String cached = cacheRepository.getCacheByNameAndKey(cacheName, maskedKey, String.class);
+            if (StringUtils.isBlank(cached)) {
+                // Retrocompatibilidade: tenta buscar pela chave legada em texto claro
+                cached = cacheRepository.getCacheByNameAndKey(cacheName, name, String.class);
+            }
+            if (StringUtils.isBlank(cached)) {
+                return null;
+            }
+            return ssmCacheCrypto.decrypt(cached);
         } catch (Exception e) {
-            log.warn("Erro ao buscar parâmetro [{}] no cache: {}", name, e.getMessage());
+            log.warn("Erro ao buscar/descriptografar parâmetro [{}] no cache: {}", name, e.getMessage());
             return null;
         }
     }
@@ -249,16 +282,21 @@ public class AwsParameterStoreServiceImpl implements AwsParameterStoreService {
     private void cacheIfValid(String name, String value, Duration ttl) {
         if (cacheRepository == null || StringUtils.isBlank(value)) return;
         try {
-            cacheRepository.saveCacheByNameAndKey(KEY_CACHE_SSM_DEFAULT, name, value, ttl);
+            String maskedKey = ssmCacheCrypto.maskKey(name);
+            String encryptedValue = ssmCacheCrypto.encrypt(value);
+            cacheRepository.saveCacheByNameAndKey(cacheName, maskedKey, encryptedValue, ttl);
         } catch (Exception e) {
-            log.warn("Erro ao salvar parâmetro [{}] no cache: {}", name, e.getMessage());
+            log.warn("Erro ao criptografar/salvar parâmetro [{}] no cache: {}", name, e.getMessage());
         }
     }
 
     private void evictCache(String name) {
         if (cacheRepository == null) return;
         try {
-            cacheRepository.removeCacheByNameAndKey(KEY_CACHE_SSM_DEFAULT, name);
+            String maskedKey = ssmCacheCrypto.maskKey(name);
+            cacheRepository.removeCacheByNameAndKey(cacheName, maskedKey);
+            // Também remove a chave legada se existir no cache
+            cacheRepository.removeCacheByNameAndKey(cacheName, name);
         } catch (Exception e) {
             log.warn("Erro ao remover parâmetro [{}] do cache: {}", name, e.getMessage());
         }
