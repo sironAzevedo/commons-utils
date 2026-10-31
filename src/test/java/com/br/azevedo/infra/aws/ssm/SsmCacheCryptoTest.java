@@ -99,14 +99,18 @@ class SsmCacheCryptoTest {
     }
 
     @Test
-    @DisplayName("Deve resolver chave secreta a partir do Spring Environment")
-    void shouldResolveSecretFromEnvironment() {
-        MockEnvironment env = new MockEnvironment();
-        env.setProperty("cloud.aws.ssm.cache.secret-key", "env-secret-key-123");
+    @DisplayName("Deve ser 100% interoperável com Node.js SsmCacheCrypto (mesmo hash e mesmo AES-GCM)")
+    void shouldInteroperateWithNodeCrypto() {
+        SsmCacheCrypto javaCrypto = new SsmCacheCrypto("cross-platform-secret-123");
 
-        SsmCacheCrypto crypto = new SsmCacheCrypto(env);
-        String encrypted = crypto.encrypt("teste");
+        // Hash gerado pelo Node.js
+        String param = "/auth-api/jwt/credentials-dev";
+        String expectedMaskedKey = "sec_237379b619e09da2ce8d883dc2ad76d1fdb0eb2cbfac1bf421c637db53e64f3d";
+        assertEquals(expectedMaskedKey, javaCrypto.maskKey(param));
 
-        assertEquals("teste", crypto.decrypt(encrypted));
+        // Payload cifrado pelo Node.js com a mesma secret
+        String nodeCiphertext = "ENC:GCM:HMVOcPKLiGNVRImkhJ4VENOz/w1VvMSqjg+la9Rg+jrb1gZObN6GqO5tmv2aCoEaHe15XMoe";
+        String decryptedInJava = javaCrypto.decrypt(nodeCiphertext);
+        assertEquals("super-cross-platform-token", decryptedInJava);
     }
 }

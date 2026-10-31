@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BigDecimalCurrencySerializerTest {
@@ -30,13 +32,17 @@ class BigDecimalCurrencySerializerTest {
     }
 
     @Test
-    @DisplayName("Deve serializar BigDecimal no objectMapperRedis sem lançar Type id handling not implemented")
-    void shouldSerializeBigDecimalWithRedisObjectMapper() {
-        SampleDto dto = new SampleDto(new BigDecimal("150.50"));
+    @DisplayName("Deve serializar e desserializar BigDecimal no objectMapperRedis sem lançar exceção")
+    void shouldSerializeAndDeserializeBigDecimalWithRedisObjectMapper() {
+        SampleDto dto = new SampleDto(new BigDecimal("101512.80"));
 
         assertDoesNotThrow(() -> {
             String json = JsonUtils.objectMapperRedis().writeValueAsString(dto);
-            assertTrue(json.contains("150,50"));
+            assertTrue(json.contains("101.512,80"));
+
+            SampleDto deserialized = JsonUtils.objectMapperRedis().readValue(json, SampleDto.class);
+            assertNotNull(deserialized);
+            assertEquals(new BigDecimal("101512.8"), deserialized.getValor());
         });
     }
 }

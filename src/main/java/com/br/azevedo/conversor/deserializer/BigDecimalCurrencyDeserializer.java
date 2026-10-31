@@ -20,8 +20,14 @@ public class BigDecimalCurrencyDeserializer extends JsonDeserializer<BigDecimal>
     @Override
     public BigDecimal deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         String value = jsonParser.getText();
-        MoedaUtils.verificarFormatoBrasileiro(value);
-        return MoedaUtils.stringToBigDecimal(value);
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        if (value.contains(",")) {
+            MoedaUtils.verificarFormatoBrasileiro(value);
+            return MoedaUtils.stringToBigDecimal(value);
+        }
+        return new BigDecimal(value);
     }
 
 
