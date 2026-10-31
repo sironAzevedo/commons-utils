@@ -1,5 +1,6 @@
 package com.br.azevedo.utils;
 
+import com.br.azevedo.conversor.deserializer.BigDecimalCurrencyDeserializer;
 import com.br.azevedo.conversor.serializer.BigDecimalCurrencySerializer;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -83,6 +84,7 @@ public class JsonUtils {
 
         SimpleModule simpleModule = new SimpleModule();
         simpleModule.addSerializer(BigDecimal.class, new BigDecimalCurrencySerializer());
+        simpleModule.addDeserializer(BigDecimal.class, new BigDecimalCurrencyDeserializer());
         objectMapper.registerModule(simpleModule);
 
         return objectMapper;
